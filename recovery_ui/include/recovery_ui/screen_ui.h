@@ -28,6 +28,15 @@
 
 #include "ui.h"
 
+class Point {
+  public:
+    int x_ = 0;
+    int y_ = 0;
+    Point(int x, int y):
+    x_(x),y_(y){};
+    bool Valid();
+};
+
 // From minui/minui.h.
 class GRSurface;
 
@@ -227,6 +236,7 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
                   size_t initial_selection, bool menu_only,
                   const std::function<int(int, bool)>& key_handler) override;
   void SetTitle(const std::vector<std::string>& lines) override;
+  void SetTitleHighLight(const std::vector<bool>& lines) override;
 
   void KeyLongPress(int) override;
 
@@ -383,6 +393,8 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
   bool show_text_ever;  // has show_text ever been true?
 
   std::vector<std::string> title_lines_;
+  std::vector<bool> highlight_lines_;
+  std::vector<Point> points_;
 
   bool scrollable_menu_;
   std::unique_ptr<Menu> menu_;

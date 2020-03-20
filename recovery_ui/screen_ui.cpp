@@ -54,6 +54,11 @@ static double now() {
   return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
+bool Point::Valid() {
+  return (x_ > 0 && x_ < gr_fb_width() &&
+          y_ > 0 && y_ < gr_fb_height());
+}
+
 Menu::Menu(size_t initial_selection, const DrawInterface& draw_func)
     : selection_(initial_selection), draw_funcs_(draw_func) {}
 
@@ -686,6 +691,10 @@ std::vector<std::string> ScreenRecoveryUI::GetMenuHelpMessage() const {
   return HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP;
 }
 
+void ScreenRecoveryUI::SetTitleHighLight(const std::vector<bool>& lines) {
+  highlight_lines_ = lines;
+}
+
 // Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
 // locked.
 void ScreenRecoveryUI::draw_screen_locked() {
@@ -715,12 +724,31 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
     y += height;
   }
 
+  // Draw all of the Point.
+  if (!swipe_screen_allowed_) {
+    Point cur_point(touch_X_, touch_Y_);
+    if (touch_finger_down_ && cur_point.Valid()) {
+      points_.push_back(cur_point);
+    } else {
+      points_.clear();
+    }
+    if (points_.size() > 0) {
+      SetColor(UIElement::HEADER);
+      for (size_t i = 0; i < points_.size(); i++) {
+        DrawFill(points_[i].x_, points_[i].y_, points_[i].x_ + 3, points_[i].y_ + 3);
+      }
+    }
+  }
+
   if (menu_) {
     int x = margin_width_ + kMenuIndent;
 
-    SetColor(UIElement::INFO);
-
     for (size_t i = 0; i < title_lines_.size(); i++) {
+      if (highlight_lines_[i]) {
+        SetColor(UIElement::HEADER);
+      } else {
+        SetColor(UIElement::INFO);
+      }
       y += DrawTextLine(x, y, title_lines_[i], i == 0);
     }
 

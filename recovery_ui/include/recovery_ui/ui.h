@@ -149,6 +149,7 @@ class RecoveryUI {
   // --- menu display ---
 
   virtual void SetTitle(const std::vector<std::string>& lines) = 0;
+  virtual void SetTitleHighLight(const std::vector<bool>& lines) = 0;
 
   // Displays a menu with the given 'headers' and 'items'. The supplied 'key_handler' callback,
   // which is typically bound to Device::HandleMenuKey(), should return the expected action for the
@@ -193,6 +194,9 @@ class RecoveryUI {
     return key_interrupted_;
   }
 
+  // Set Whether or not the touch event can be get.
+  void SetEnableTouchEvent(bool enable_touch, bool enable_swipe);
+
  protected:
   void EnqueueKey(int key_code);
 
@@ -206,6 +210,14 @@ class RecoveryUI {
 
   // Whether we should listen for touch inputs (default: false).
   bool touch_screen_allowed_;
+  bool swipe_screen_allowed_;
+
+  // Move these data here, allow child class to use.
+  int touch_X_;
+  int touch_Y_;
+  int touch_start_X_;
+  int touch_start_Y_;
+  bool touch_finger_down_;
 
   bool fastbootd_logo_enabled_;
 
@@ -256,11 +268,6 @@ class RecoveryUI {
 
   // Touch event related variables. See the comments in RecoveryUI::OnInputEvent().
   int touch_slot_;
-  int touch_X_;
-  int touch_Y_;
-  int touch_start_X_;
-  int touch_start_Y_;
-  bool touch_finger_down_;
   bool touch_swiping_;
   bool is_bootreason_recovery_ui_;
 
