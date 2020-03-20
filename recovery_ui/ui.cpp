@@ -245,7 +245,6 @@ int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
   // ABS_MT_TRACKING_ID being -1.
   //
   // Touch input events will only be available if touch_screen_allowed_ is set.
-
   if (ev.type == EV_SYN) {
     if (touch_screen_allowed_ && ev.code == SYN_REPORT) {
       // There might be multiple SYN_REPORT events. We should only detect a swipe after lifting the
@@ -254,7 +253,7 @@ int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
         touch_start_X_ = touch_X_;
         touch_start_Y_ = touch_Y_;
         touch_swiping_ = true;
-      } else if (!touch_finger_down_ && touch_swiping_) {
+      } else if (!touch_finger_down_ && touch_swiping_ && swipe_screen_allowed_) {
         touch_swiping_ = false;
         OnTouchDetected(touch_X_ - touch_start_X_, touch_Y_ - touch_start_Y_);
       }
@@ -286,6 +285,8 @@ int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
   if (touch_screen_allowed_ && ev.type == EV_ABS) {
     if (ev.code == ABS_MT_SLOT) {
       touch_slot_ = ev.value;
+    } else {
+      touch_slot_ = 0;
     }
     // Ignore other fingers.
     if (touch_slot_ > 0) return 0;
@@ -327,7 +328,6 @@ int RecoveryUI::OnInputEvent(int fd, uint32_t epevents) {
 
     ProcessKey(ev.code, ev.value);
   }
-
   return 0;
 }
 
@@ -404,6 +404,14 @@ void RecoveryUI::EnqueueKey(int key_code) {
     key_queue[key_queue_len++] = key_code;
     key_queue_cond.notify_one();
   }
+}
+
+void RecoveryUI::SetEnableTouchEvent(bool enable_touch, bool enable_swipe) {
+  touch_screen_allowed_ = enable_touch;
+  swipe_screen_allowed_ = enable_swipe;
+  has_touch_screen = enable_touch;
+  ev_init(std::bind(&RecoveryUI::OnInputEvent, this, std::placeholders::_1, std::placeholders::_2),
+          touch_screen_allowed_);
 }
 
 void RecoveryUI::SetScreensaverState(ScreensaverState state) {
