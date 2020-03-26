@@ -695,6 +695,10 @@ void ScreenRecoveryUI::SetTitleHighLight(const std::vector<bool>& lines) {
   highlight_lines_ = lines;
 }
 
+void ScreenRecoveryUI::SetTitleResult(const std::vector<TestResultEnum>& lines) {
+  result_lines_ = lines;
+}
+
 // Redraws everything on the screen. Does not flip pages. Should only be called with updateMutex
 // locked.
 void ScreenRecoveryUI::draw_screen_locked() {
@@ -744,10 +748,25 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
     int x = margin_width_ + kMenuIndent;
 
     for (size_t i = 0; i < title_lines_.size(); i++) {
-      if (highlight_lines_[i]) {
-        SetColor(UIElement::HEADER);
+      if (result_lines_.size() == title_lines_.size()) {
+        // Only change the color when PCBA is running.
+        switch (result_lines_[i]) {
+          case TestResultEnum::TESTING:
+            SetColor(UIElement::INFO);
+            break;
+          case TestResultEnum::PASS:
+            gr_color(0, 249, 0, 255);
+            break;
+          case TestResultEnum::FAILED:
+            SetColor(UIElement::HEADER);
+            break;
+          default:
+            SetColor(UIElement::INFO);
+            break;
+        }
       } else {
-        SetColor(UIElement::INFO);
+          // Regular RecoveryUI.
+          SetColor(UIElement::INFO);
       }
       y += DrawTextLine(x, y, title_lines_[i], i == 0);
     }

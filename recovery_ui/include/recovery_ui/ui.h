@@ -53,6 +53,12 @@ class RecoveryUI {
     IGNORE,
   };
 
+  enum TestResultEnum {
+    TESTING,
+    PASS,
+    FAILED
+  };
+
   enum class KeyError : int {
     TIMED_OUT = -1,
     INTERRUPTED = -2,
@@ -149,7 +155,7 @@ class RecoveryUI {
   // --- menu display ---
 
   virtual void SetTitle(const std::vector<std::string>& lines) = 0;
-  virtual void SetTitleHighLight(const std::vector<bool>& lines) = 0;
+  virtual void SetTitleResult(const std::vector<TestResultEnum>& lines) = 0;
 
   // Displays a menu with the given 'headers' and 'items'. The supplied 'key_handler' callback,
   // which is typically bound to Device::HandleMenuKey(), should return the expected action for the
