@@ -81,7 +81,7 @@ class StubRecoveryUI : public RecoveryUI {
   }
 
   void SetTitle(const std::vector<std::string>& /* lines */) override {}
-  void SetTitleHighLight(const std::vector<bool>& /* lines */) override {}
+  void SetTitleResult(const std::vector<TestResultEnum>& /* lines */) override {}
 };
 
 #endif  // RECOVERY_STUB_UI_H
