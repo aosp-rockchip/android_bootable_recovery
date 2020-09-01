@@ -39,7 +39,7 @@
 #include "install/install.h"
 #include "recovery_utils/roots.h"
 
-static constexpr const char* SDCARD_ROOT = "/sdcard";
+static constexpr const char* SDCARD_ROOT = "/mnt/external_sd";
 // How long (in seconds) we wait for the fuse-provided package file to
 // appear, before timing out.
 static constexpr int SDCARD_INSTALL_TIMEOUT = 10;
@@ -181,10 +181,10 @@ InstallResult InstallWithFuseFromPath(std::string_view path, RecoveryUI* ui) {
       }
     }
     auto package =
-        Package::CreateFilePackage(FUSE_SIDELOAD_HOST_PATHNAME,
+        Package::CreateFilePackage(/*FUSE_SIDELOAD_HOST_PATHNAME*/"/mnt/external_sd/update.zip",
                                    std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
     result =
-        InstallPackage(package.get(), FUSE_SIDELOAD_HOST_PATHNAME, false, 0 /* retry_count */, ui);
+        InstallPackage(package.get(), /*FUSE_SIDELOAD_HOST_PATHNAME*/"/mnt/external_sd/update.zip", false, 0 /* retry_count */, ui);
     break;
   }
 

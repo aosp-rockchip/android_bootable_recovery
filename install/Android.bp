@@ -43,6 +43,8 @@ cc_defaults {
 
         // external dependencies
         "libvintf",
+        "libmtdutils",
+        "librkupdate",
     ],
 }
 
