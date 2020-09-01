@@ -59,11 +59,16 @@
 #include "recovery_ui/ui.h"
 #include "recovery_utils/logging.h"
 #include "recovery_utils/roots.h"
+#include "rkutility/rktools.h"
+#include "rkutility/sdboot.h"
 
 static constexpr const char* COMMAND_FILE = "/cache/recovery/command";
 static constexpr const char* LOCALE_FILE = "/cache/recovery/last_locale";
 
 static RecoveryUI* ui = nullptr;
+#ifdef LogToSDCard
+static const char *SDCARD_LOG_FILE = "/mnt/external_sd/recovery.log";
+#endif
 
 static bool IsRoDebuggable() {
   return android::base::GetBoolProperty("ro.debuggable", false);
@@ -230,6 +235,7 @@ static void ListenRecoverySocket(RecoveryUI* ui, std::atomic<Device::BuiltinActi
   }
 }
 
+#ifdef LogToCache
 static void redirect_stdio(const char* filename) {
   android::base::unique_fd pipe_read, pipe_write;
   // Create a pipe that allows parent process sending logs over.
@@ -315,6 +321,37 @@ static void redirect_stdio(const char* filename) {
     }
   }
 }
+#endif
+
+std::vector<std::string> get_args_from_sd(int argc, char **argv, SDBoot* prksdboot){
+    printf("in get_args_from_sd\n");
+    std::vector<std::string> args;
+    ensure_sd_mounted(prksdboot);
+    if (!prksdboot->sdboot_get_bSDMounted())
+    {
+        printf("out get_args_from_sd:bSDMounted\n");
+        return args;
+    }
+    char configFile[64];
+    strcpy(configFile, EX_SDCARD_ROOT);
+    strcat(configFile, "/sd_boot_config.config");
+    args = prksdboot->get_sd_config(configFile, argc, argv);
+
+    return args;
+}
+
+std::vector<std::string> get_args_rk_sd(int argc, char **argv, SDBoot* prksdboot){
+    std::vector<std::string> args;
+    if(prksdboot->isSDboot()){
+        args = get_args_from_sd(argc, argv, prksdboot);
+    }else if(prksdboot->isUSBboot()){
+        args = prksdboot->get_args_from_usb(argc, argv);
+    }else{
+        printf("ERROR: get_args failed.(%s:%d)\n", __func__, __LINE__);
+    }
+    return args;
+}
+
 
 int main(int argc, char** argv) {
   // We don't have logcat yet under recovery; so we'll print error on screen and log to stdout
@@ -334,13 +371,36 @@ int main(int argc, char** argv) {
 
   // redirect_stdio should be called only in non-sideload mode. Otherwise we may have two logger
   // instances with different timestamps.
+#ifdef LogToCache
   redirect_stdio(Paths::Get().temporary_log_file().c_str());
+#endif
+
+#ifdef LogToSerial
+  char *SerialName = getSerial();
+  freopen(SerialName, "a", stdout); setbuf(stdout, NULL);
+  freopen(SerialName, "a", stderr); setbuf(stderr, NULL);
+  free(SerialName);
+#endif
+
 
   load_volume_table();
 
+  setFlashPoint();
+  SDBoot rksdboot;
   std::string stage;
-  std::vector<std::string> args = get_args(argc, argv, &stage);
+
+  std::vector<std::string> args;
+  if(rksdboot.isSDboot() || rksdboot.isUSBboot()){
+    args = get_args_rk_sd(argc, argv, &rksdboot);
+  }else{
+    args = get_args(argc, argv, &stage);
+  }
   auto args_to_parse = StringVectorToNullTerminatedArray(args);
+
+#ifdef LogToSDCard
+  ensure_sd_mounted(&rksdboot);
+  redirect_stdio(SDCARD_LOG_FILE);
+#endif
 
   static constexpr struct option OPTIONS[] = {
     { "fastboot", no_argument, nullptr, 0 },
@@ -487,7 +547,7 @@ int main(int argc, char** argv) {
 
     ui->SetEnableFastbootdLogo(fastboot);
 
-    auto ret = fastboot ? StartFastboot(device, args) : start_recovery(device, args);
+    auto ret = fastboot ? StartFastboot(device, args) : start_recovery(device, args, &rksdboot);
 
     if (ret == Device::KEY_INTERRUPTED) {
       ret = action.exchange(ret);

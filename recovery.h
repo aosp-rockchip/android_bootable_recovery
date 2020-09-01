@@ -20,5 +20,9 @@
 #include <vector>
 
 #include "recovery_ui/device.h"
+#include "rkutility/sdboot.h"
 
-Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args);
+
+Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args, SDBoot* prksdboot);
+void ensure_sd_mounted(SDBoot* prksdboot);
+

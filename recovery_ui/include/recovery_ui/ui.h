@@ -99,6 +99,7 @@ class RecoveryUI {
   // Print() will also dump the message to stdout / log file, while PrintOnScreenOnly() not.
   virtual void Print(const char* fmt, ...) __printflike(2, 3) = 0;
   virtual void PrintOnScreenOnly(const char* fmt, ...) __printflike(2, 3) = 0;
+  virtual void PrintV(const char*, bool, va_list) = 0;
 
   // Shows the contents of the given file. Caller ensures the patition that contains the file has
   // been mounted.
