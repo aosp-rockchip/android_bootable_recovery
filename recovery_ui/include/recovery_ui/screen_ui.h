@@ -220,6 +220,7 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
   void Print(const char* fmt, ...) override __printflike(2, 3);
   void PrintOnScreenOnly(const char* fmt, ...) override __printflike(2, 3);
   void ShowFile(const std::string& filename) override;
+  void PrintV(const char*, bool, va_list) override;
 
   // menu display
   size_t ShowMenu(const std::vector<std::string>& headers, const std::vector<std::string>& items,
@@ -302,7 +303,6 @@ class ScreenRecoveryUI : public RecoveryUI, public DrawInterface {
   void ProgressThreadLoop();
 
   virtual void ShowFile(FILE*);
-  virtual void PrintV(const char*, bool, va_list);
   void PutChar(char);
   void ClearText();
 

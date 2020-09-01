@@ -33,6 +33,7 @@ on init
     mkdir /cache
     mkdir /sideload
     mkdir /mnt/system
+    mkdir /metadata
     mount tmpfs tmpfs /tmp
 
     chown root shell /tmp
