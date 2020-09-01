@@ -56,6 +56,7 @@
 #include "recovery_ui/ui.h"
 #include "recovery_utils/roots.h"
 #include "recovery_utils/thermalutil.h"
+#include "rkupdate/Upgrade.h"
 
 using namespace std::chrono_literals;
 
@@ -698,4 +699,111 @@ bool SetupPackageMount(const std::string& package_path, bool* should_use_fuse) {
     *should_use_fuse = false;
   }
   return true;
+}
+
+
+bool SetupBlockMapMount(const std::string& package_path) {
+  if (package_path.empty()) {
+    return false;
+  }
+
+  if (package_path[0] == '@') {
+    auto block_map_path = package_path.substr(1);
+    if (ensure_path_mounted(block_map_path) != 0) {
+      LOG(ERROR) << "Failed to mount " << block_map_path;
+      return false;
+    }
+    return true;
+  }
+
+  if (ensure_path_mounted(package_path) != 0) {
+    LOG(ERROR) << "Failed to mount " << package_path;
+    return false;
+  }
+
+  return true;
+}
+
+
+static int rkloader_bin(ZipArchiveHandle zip,const std::string& binary_path) {
+  static constexpr const char* BINARY_NAME = "RKLoader.bin";
+  ZipEntry binary_entry;
+  if (FindEntry(zip, BINARY_NAME, &binary_entry) != 0) {
+    LOG(ERROR) << "Failed to find update binary " << BINARY_NAME;
+    return INSTALL_CORRUPT;
+  }
+
+  unlink(binary_path.c_str());
+  int fd = open(binary_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0755);
+  if (fd == -1) {
+    PLOG(ERROR) << "Failed to create " << binary_path;
+    return INSTALL_ERROR;
+  }
+
+  int32_t error = ExtractEntryToFile(zip, &binary_entry, fd);
+  close(fd);
+  if (error != 0) {
+    LOG(ERROR) << "Failed to extract " << BINARY_NAME << ": " << ErrorCodeString(error);
+    return INSTALL_ERROR;
+  }
+
+  return INSTALL_SUCCESS;
+}
+
+static int really_install_rkloader_package(Package* package,RecoveryUI* ui) {
+  ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
+  // Give verification half the progress bar...
+  ui->SetProgressType(RecoveryUI::DETERMINATE);
+  ui->ShowProgress(VERIFICATION_PROGRESS_FRACTION, VERIFICATION_PROGRESS_TIME);
+
+  // Verify package.
+  if (!verify_package(package, ui)) {
+	return INSTALL_CORRUPT;
+  }
+
+  // Try to open the package.
+  ZipArchiveHandle zip = package->GetZipArchiveHandle();
+  if (!zip) {
+	LOG(ERROR) << "failed to GetZipArchiveHandle kZipOpenFailure ";
+    return INSTALL_CORRUPT;
+  }
+
+  // Verify and install the contents of the package.
+  ui->Print("Installing update...\n");
+
+  ui->SetEnableReboot(false);
+  int result = rkloader_bin(zip, "/tmp/RKLoader.bin");
+  if (INSTALL_SUCCESS == result) {
+    void *pCallback = NULL;
+    void *pProgressCallback = NULL;
+    char *szBootDev = NULL;
+    int bRet = 0;
+    bRet= do_rk_firmware_upgrade((char *)"/tmp/RKLoader.bin", pCallback, pProgressCallback, szBootDev);
+    if(bRet){
+      result = INSTALL_SUCCESS;
+    } else {
+      result = INSTALL_ERROR;
+    }
+  }
+  ui->SetEnableReboot(true);
+  ui->Print("\n");
+
+  return result;
+}
+
+int install_rkloader_package(Package* package, const std::string_view package_id, RecoveryUI* ui) {
+  int result = INSTALL_SUCCESS;
+
+  LOG(INFO) << "install_rkloader_package Update package id: " << package_id;
+  if (!package) {
+    LOG(ERROR) << "package null in install_rkloader_package; aborting";
+    result = INSTALL_CORRUPT;
+  } else if (setup_install_mounts() != 0) {
+    LOG(ERROR) << "failed to set up expected mounts for install_rkloader_package; aborting";
+    result = INSTALL_ERROR;
+  } else {
+    result = really_install_rkloader_package(package, ui);
+  }
+
+  return result;
 }
