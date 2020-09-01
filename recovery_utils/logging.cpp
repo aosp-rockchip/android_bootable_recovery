@@ -270,7 +270,7 @@ std::vector<saved_log_file> ReadLogFilesToMemory() {
 
   std::vector<saved_log_file> log_files;
   while ((de = readdir(d.get())) != nullptr) {
-    if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0) {
+    if (strncmp(de->d_name, "last_", 5) == 0 || strcmp(de->d_name, "log") == 0 || strncmp(de->d_name, "Recovery_", 9) == 0) {
       std::string path = android::base::StringPrintf("%s/%s", CACHE_LOG_DIR, de->d_name);
 
       struct stat sb;
