@@ -100,7 +100,6 @@ int ensure_path_mounted(const std::string& path) {
       return -1;
     }
 
-    printf("ensure_path_mounted fs_mgr mount failed, path=%s, volume_for_mount_point can get Volumne  \n", path.c_str());
     if (strcmp((v->fs_type).c_str(), (const char*)"ramdisk") == 0) {
       // The ramdisk is always mounted.
       return 0;

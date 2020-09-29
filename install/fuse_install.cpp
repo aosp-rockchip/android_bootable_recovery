@@ -181,10 +181,10 @@ InstallResult InstallWithFuseFromPath(std::string_view path, RecoveryUI* ui) {
       }
     }
     auto package =
-        Package::CreateFilePackage(/*FUSE_SIDELOAD_HOST_PATHNAME*/"/mnt/external_sd/update.zip",
+        Package::CreateFilePackage(FUSE_SIDELOAD_HOST_PATHNAME,
                                    std::bind(&RecoveryUI::SetProgress, ui, std::placeholders::_1));
     result =
-        InstallPackage(package.get(), /*FUSE_SIDELOAD_HOST_PATHNAME*/"/mnt/external_sd/update.zip", false, 0 /* retry_count */, ui);
+        InstallPackage(package.get(), FUSE_SIDELOAD_HOST_PATHNAME, false, 0 /* retry_count */, ui);
     break;
   }
 
