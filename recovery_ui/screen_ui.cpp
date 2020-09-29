@@ -776,7 +776,15 @@ void ScreenRecoveryUI::draw_menu_and_text_buffer_locked(
     y += menu_->DrawHeader(x, y);
     y += menu_->DrawItems(x, y, ScreenWidth(), IsLongPress());
   }
-
+  // Display RGA PCBA Test.
+  if(RkFactory_Start_){
+    gr_color(255, 0, 0, 255); //gr_color(255, 0, 0, 255);
+    DrawHighlightBar(0, y, ScreenWidth()/3, ScreenHeight()/5);
+    gr_color(0, 255, 0, 255);
+    DrawHighlightBar(ScreenWidth()/3, y, ScreenWidth()/3, ScreenHeight()/5);
+    gr_color(0, 0, 255, 255);
+    DrawHighlightBar(2*ScreenWidth()/3, y, ScreenWidth()/3, ScreenHeight()/5);
+  }
   // Display from the bottom up, until we hit the top of the screen, the bottom of the menu, or
   // we've displayed the entire text buffer.
   SetColor(UIElement::LOG);
