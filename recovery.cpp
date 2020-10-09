@@ -1286,7 +1286,7 @@ Device::BuiltinAction start_recovery(Device* device, const std::vector<std::stri
         bAutoUpdateComplete = true;
     }
   } else if (rkloader_update_package != nullptr) {
-    SetupBlockMapMount(update_package);
+    SetupBlockMapMount(rkloader_update_package);
     printf("rkloader_update_package=%s\n", rkloader_update_package);
     const char *reallyPath = check_media_package(rkloader_update_package, prksdboot, ui);
     if(reallyPath == NULL){
