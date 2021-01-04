@@ -691,10 +691,6 @@ std::vector<std::string> ScreenRecoveryUI::GetMenuHelpMessage() const {
   return HasThreeButtons() ? REGULAR_HELP : LONG_PRESS_HELP;
 }
 
-void ScreenRecoveryUI::SetTitleHighLight(const std::vector<bool>& lines) {
-  highlight_lines_ = lines;
-}
-
 void ScreenRecoveryUI::SetTitleResult(const std::vector<TestResultEnum>& lines) {
   result_lines_ = lines;
 }
