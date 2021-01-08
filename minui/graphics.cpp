@@ -362,17 +362,31 @@ int gr_init() {
            ret);
   }
 
+  bool is_eink_fb = android::base::GetBoolProperty("sys.eink.recovery.eink_fb", false);
   auto backend = std::unique_ptr<MinuiBackend>{ std::make_unique<MinuiBackendAdf>() };
   gr_draw = backend->Init();
 
-  if (!gr_draw) {
-    backend = std::make_unique<MinuiBackendDrm>();
-    gr_draw = backend->Init();
-  }
+  if (is_eink_fb) {
+    printf("gr_init is eink fb\n");
+    if (!gr_draw) {
+      backend = std::make_unique<MinuiBackendFbdev>();
+      gr_draw = backend->Init();
+    }
 
-  if (!gr_draw) {
-    backend = std::make_unique<MinuiBackendFbdev>();
-    gr_draw = backend->Init();
+    if (!gr_draw) {
+      backend = std::make_unique<MinuiBackendDrm>();
+      gr_draw = backend->Init();
+    }
+  } else {
+    if (!gr_draw) {
+      backend = std::make_unique<MinuiBackendDrm>();
+      gr_draw = backend->Init();
+    }
+
+    if (!gr_draw) {
+      backend = std::make_unique<MinuiBackendFbdev>();
+      gr_draw = backend->Init();
+    }
   }
 
   if (!gr_draw) {
