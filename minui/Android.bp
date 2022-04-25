@@ -31,12 +31,6 @@ cc_library {
         "graphics_drm.cpp",
         "graphics_fbdev.cpp",
         "resources.cpp",
-        "rgb888_to_gray_256_neon.s",
-    ],
-
-    cflags: [
-        "-Werror",
-        "-Wno-unused-parameter",
     ],
 
     whole_static_libs: [
